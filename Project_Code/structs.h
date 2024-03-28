@@ -1,0 +1,17 @@
+void Ingredients_init(Ingredients* self, int w, int t, int su, int sc, int sL);
+Ingredients* Ingredients_create(int w, int t, int su, int sc, int sL);
+void Ingredients_reset(Ingredients* self);
+void Ingredients_destroy(Ingredients point);
+int water(Ingredients* self);
+int tea(Ingredients* self);
+int sugar(Ingredients* self);
+int scoby(Ingredients* self);
+int sL(Ingredients* self);
+void Thresholds_init(Thresholds* self, int w, int t, int su, int sc, int sL);
+Thresholds* Thresholds_create(int w, int t, int su, int sc, int sL);
+void Thresholds_reset(Thresholds* self);
+void Thresholds_destroy(Thresholds point);
+int temp(Thresholds* self);
+int alc(Thresholds* self);
+int pressure(Thresholds* self);
+int light(Thresholds* self);
