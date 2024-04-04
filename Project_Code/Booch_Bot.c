@@ -12,8 +12,8 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <stdlib.h>
-#include <structs.h>
-#include <lcd.h>
+#include "lcd.h"
+#include "i2c.h"
 
 int main(void)
 {
@@ -27,12 +27,13 @@ int main(void)
 	
 	//initialize variables
 	volatile int state = 0;
+	lcd_init();
 	
 	// initialize threshold comparison structures
-	Kom_Thresh_Ing = Ingredients_create(2, 4, 1, 1, 2); //based off online recipe in cups
-	Kom_Thresh_Val1 = Thresholds_create(0,0,0,0); //fill in values
-	Kom_Thresh_Val2 = Thresholds_create(0,0,0,0); //fill in values
-	
+	// Kom_Thresh_Ing = Ingredients_create(2, 4, 1, 1, 2); //based off online recipe in cups
+	// Kom_Thresh_Val1 = Thresholds_create(0,0,0,0); //fill in values
+	// Kom_Thresh_Val2 = Thresholds_create(0,0,0,0); //fill in values
+	lcd_stringout("Booch Bot!");
 	//infinite loop
     while (1) {
 		if (state == 0){ //Initial state
@@ -55,7 +56,7 @@ int main(void)
 			//close air valve
 			state = 3;
 			
-		} else if (state == 3) { //second fermentation
+		} else if (state == 3) { //Second fermentation
 			//loop for set amount of time
 			//sensors read in
 			//compare sensors to threshold values
@@ -66,6 +67,7 @@ int main(void)
 			//ask user to terminate fermentation
 			state = 0;
 		}
+		_delay_ms(100);
 	}
 
     return 0;   /* never reached */

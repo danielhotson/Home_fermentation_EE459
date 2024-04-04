@@ -1,5 +1,5 @@
 /*
-  lcd.c - Routines for sending data and commands to the LCD shield
+  lcd.c - Routines for sending data and commands to the LCD via i2c
 */
 
 #include <avr/io.h>
@@ -15,39 +15,52 @@
 #define BDIV (FOSC / 100000 - 16) / 2 + 1    // Puts I2C rate just below 100kHz
 #define I2C_ADDRESS 0x7E //0b01111110
 
+uint8_t line[4] = {0x80, 0xC0, 0x94, 0xD4};
+int mLine = 0;
+int mChar = 0;
+
+
 /*
   lcd_init - Do various things to initialize the LCD display
 */
 void lcd_init(void)
 {
   i2c_init(BDIV);
+  _delay_ms(500);
 
-    lcd_writecommand(0x38);  //Function Set: 2 lines
-	  _delay_ms(120);
+  lcd_writecommand(0x38);  //Function Set: 2 lines
+  _delay_ms(120);
 
-    lcd_writecommand(0x0f); //Display on, cursor on, cursor blinks
-	  _delay_ms(120);
+  lcd_writecommand(0x0f); //Display on, cursor on, cursor blinks
+  _delay_ms(120);
 
-    lcd_writecommand(0x01); //Clear display
-	  _delay_ms(120);
+  lcd_writecommand(0x01); //Clear display
+  _delay_ms(120);
 
-    lcd_writecommand(0x06); //Entry mode: cursor shifts right
-	  _delay_ms(120);
+  lcd_writecommand(0x06); //Entry mode: cursor shifts right
+  _delay_ms(120);
 
 }
-
 
 /*
   lcd_stringout - Print the contents of the character string "str"
   at the current cursor position.
 */
-void lcd_stringout(char *str)
+void lcd_stringout(unsigned char str[])
 {
     int i = 0;
-    while (str[i] != '\0') {    // Loop until next charater is NULL byte
+    if(mChar == 20){ //correctly increments to next line if over 20 
+          lcd_nextLine();
+    }
+    while (str[i] != '\0') {    // Loop until next charater is NULL byt
         lcd_writedata(str[i]);  // Send the character
         i++;
+        mChar ++;
+         if(mChar == 20){ //correctly increments to next line if over 20 
+          lcd_nextLine();
+        }
     }
+    
 }
 
 /*
@@ -55,7 +68,7 @@ void lcd_stringout(char *str)
 */
 void lcd_writecommand(unsigned char cmd)
 {
-  unsigned char wbuf[2];
+  unsigned char wbuf[3];
   wbuf[0] = 0x80; //
   wbuf[1] = cmd;
 
@@ -67,18 +80,37 @@ void lcd_writecommand(unsigned char cmd)
 */
 void lcd_writedata(unsigned char dat)
 {
-  unsigned char wbuf[] = dat;
+  unsigned char wbuf[3];
+  wbuf[0] = 0x40;
+  wbuf[1] = dat;
 
-  i2c_io(I2C_ADDRESS, wbuf, 1, NULL , 0); 
+  i2c_io(I2C_ADDRESS, wbuf, 2, NULL , 0); 
 
 }
 
 
 /*
-  lcd_moveto - Move the cursor to the row and column given by the arguments.
-  Row is 0 or 1, column is 0 - 15.
+  lcd_moveto - Move the cursor to the row 0-3
 */
-void lcd_moveto(unsigned char row, unsigned char col)
+void lcd_movetoline(int row)
 {
-    
+  mLine = row;
+  mChar=0;
+  lcd_writecommand(line[mLine]);
+  
+}
+
+void lcd_nextLine(void){
+  mLine = mLine+1;
+  mChar = 0;
+
+  if(mLine == 4){
+    mLine = 0;
+  }
+  lcd_writecommand(line[mLine]);
+  
+}
+
+void lcd_clear(void){
+  lcd_writecommand(0x01);
 }
