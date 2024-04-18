@@ -12,8 +12,8 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <stdlib.h>
-#include <structs.h>
-#include <lcd.h>
+#include "structs.h"
+#include "lcd.h"
 
 int main(void)
 {
@@ -29,6 +29,10 @@ int main(void)
 	volatile int state = 0;
 	
 	// initialize threshold comparison structures
+	Ingredients Kom_Thresh_Ing;
+	Thresholds Kom_Thresh_Val1;
+	Thresholds Kom_Thresh_Val2;
+	
 	Kom_Thresh_Ing = Ingredients_create(2, 4, 1, 1, 2); //based off online recipe in cups
 	Kom_Thresh_Val1 = Thresholds_create(0,0,0,0); //fill in values
 	Kom_Thresh_Val2 = Thresholds_create(0,0,0,0); //fill in values
