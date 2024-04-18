@@ -20,7 +20,7 @@ struct Thresholds {
 	int alc;
 	int pressure;
 	int light;
-}
+};
 
 void Ingredients_init(Ingredients* self, int w, int t, int su, int sc, int sL){
 	self->water = w;

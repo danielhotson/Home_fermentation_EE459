@@ -27,6 +27,7 @@ int main(void)
 	
 	//initialize variables
 	volatile int state = 0;
+	lcd_init();
 	
 	// initialize threshold comparison structures
 	Ingredients Kom_Thresh_Ing;
@@ -59,7 +60,7 @@ int main(void)
 			//close air valve
 			state = 3;
 			
-		} else if (state == 3) { //second fermentation
+		} else if (state == 3) { //Second fermentation
 			//loop for set amount of time
 			//sensors read in
 			//compare sensors to threshold values
@@ -70,6 +71,7 @@ int main(void)
 			//ask user to terminate fermentation
 			state = 0;
 		}
+		_delay_ms(100);
 	}
 
     return 0;   /* never reached */

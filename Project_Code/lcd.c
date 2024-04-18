@@ -1,76 +1,66 @@
 /*
-  lcd.c - Routines for sending data and commands to the LCD shield
+  lcd.c - Routines for sending data and commands to the LCD via i2c
 */
 
 #include <avr/io.h>
 #include <util/delay.h>
-
+#include <stdio.h>
+#include <string.h>
+#include "i2c.h"
 #include "lcd.h"                // Declarations of the LCD functions
 
-/* This function not declared in lcd.h since
-   should only be used by the routines in this file. */
-void lcd_writenibble(unsigned char);
+#define FOSC 7372890            // Clock frequency = Oscillator freq.
+#define BAUD 9600               // UART0 baud rate
+#define MYUBRR FOSC/16/BAUD-1   // Value for UBRR0 register
+#define BDIV (FOSC / 100000 - 16) / 2 + 1    // Puts I2C rate just below 100kHz
+#define I2C_ADDRESS 0x7E //0b01111110
 
-/* Define a couple of masks for the bits in Port B and Port D */
-#define DATA_BITS ((1 << PD7)|(1 << PD6)|(1 << PD5)|(1 << PD4))
-#define CTRL_BITS ((1 << PB1)|(1 << PB0))
+uint8_t line[4] = {0x80, 0xC0, 0x94, 0xD4};
+int mLine = 0;
+int mChar = 0;
+
 
 /*
   lcd_init - Do various things to initialize the LCD display
 */
 void lcd_init(void)
 {
-    /* ??? */                   // Set the DDR register bits for ports B and D
-                                // Take care not to affect any unnecessary bits
-    DDRB |= 0x03;
-    DDRD |= 0xf0;
-    
-    _delay_ms(15);              // Delay at least 15ms
+  i2c_init(BDIV);
+  _delay_ms(500);
 
-    lcd_writenibble(0x30);      // Use lcd_writenibble to send 0b0011
-    _delay_ms(5);               // Delay at least 4msec
+  lcd_writecommand(0x38);  //Function Set: 2 lines
+  _delay_ms(120);
 
-    lcd_writenibble(0x30);      // Use lcd_writenibble to send 0b0011
-    _delay_us(120);             // Delay at least 100usec
+  lcd_writecommand(0x0f); //Display on, cursor on, cursor blinks
+  _delay_ms(120);
 
-    lcd_writenibble(0x30);      // Use lcd_writenibble to send 0b0011, no delay needed
+  lcd_writecommand(0x01); //Clear display
+  _delay_ms(120);
 
-    lcd_writenibble(0x20);      // Use lcd_writenibble to send 0b0010
-    _delay_ms(2);               // Delay at least 2ms
-    
-    lcd_writecommand(0x28);     // Function Set: 4-bit interface, 2 lines
+  lcd_writecommand(0x06); //Entry mode: cursor shifts right
+  _delay_ms(120);
 
-    lcd_writecommand(0x0f);     // Display and cursor on
-    lcd_writecommand(1);
-}
-
-/*
-  lcd_moveto - Move the cursor to the row and column given by the arguments.
-  Row is 0 or 1, column is 0 - 15.
-*/
-void lcd_moveto(unsigned char row, unsigned char col)
-{
-    unsigned char pos;
-    if(row == 0) {
-        pos = 0x80 + col;       // 1st row locations start at 0x80
-    }
-    else {
-        pos = 0xc0 + col;       // 2nd row locations start at 0xc0
-    }
-    lcd_writecommand(pos);      // Send command
 }
 
 /*
   lcd_stringout - Print the contents of the character string "str"
   at the current cursor position.
 */
-void lcd_stringout(char *str)
+void lcd_stringout(unsigned char str[])
 {
     int i = 0;
-    while (str[i] != '\0') {    // Loop until next charater is NULL byte
+    if(mChar == 20){ //correctly increments to next line if over 20 
+          lcd_nextLine();
+    }
+    while (str[i] != '\0') {    // Loop until next charater is NULL byt
         lcd_writedata(str[i]);  // Send the character
         i++;
+        mChar ++;
+         if(mChar == 20){ //correctly increments to next line if over 20 
+          lcd_nextLine();
+        }
     }
+    
 }
 
 /*
@@ -78,14 +68,11 @@ void lcd_stringout(char *str)
 */
 void lcd_writecommand(unsigned char cmd)
 {
-    /* Clear PB0 to 0 for a command transfer */
-  PORTB &= ~(1<<PB0);
-    /* Call lcd_writenibble to send UPPER four bits of "cmd" argument */
-  lcd_writenibble(cmd);
-    /* Call lcd_writenibble to send LOWER four bits of "cmd" argument */
-  lcd_writenibble(cmd<<4);
-    /* Delay 2ms */
-  _delay_ms(2);
+  unsigned char wbuf[3];
+  wbuf[0] = 0x80; //
+  wbuf[1] = cmd;
+
+  i2c_io(I2C_ADDRESS, wbuf, 2, NULL , 0); 
 }
 
 /*
@@ -93,27 +80,37 @@ void lcd_writecommand(unsigned char cmd)
 */
 void lcd_writedata(unsigned char dat)
 {
-    /* Set PB0 to 1 for a data transfer */
-  PORTB |= (1<<PB0);
-    /* Call lcd_writenibble to send UPPER four bits of "dat" argument */
-  lcd_writenibble(dat);
-    /* Call lcd_writenibble to send LOWER four bits of "dat" argument */
-  lcd_writenibble(dat<<4);
-    /* Delay 2ms */
-  _delay_ms(2);
+  unsigned char wbuf[3];
+  wbuf[0] = 0x40;
+  wbuf[1] = dat;
+
+  i2c_io(I2C_ADDRESS, wbuf, 2, NULL , 0); 
+
 }
 
+
 /*
-  lcd_writenibble - Output the UPPER four bits of "lcdbits" to the LCD
+  lcd_moveto - Move the cursor to the row 0-3
 */
-void lcd_writenibble(unsigned char lcdbits)
+void lcd_movetoline(int row)
 {
-    /* Load PORTD, bits 7-4 with bits 7-4 of "lcdbits" */
-  #define maskbits 0xf0
-  PORTD &= ~maskbits;
-  PORTD |= (lcdbits & maskbits);
-    /* Make E signal (PB1) go to 1 and back to 0 */
-  PORTB |= (1<<PB1);
-  PORTB |= (1<<PB1);
-  PORTB &= ~(1<<PB1);
+  mLine = row;
+  mChar=0;
+  lcd_writecommand(line[mLine]);
+  
+}
+
+void lcd_nextLine(void){
+  mLine = mLine+1;
+  mChar = 0;
+
+  if(mLine == 4){
+    mLine = 0;
+  }
+  lcd_writecommand(line[mLine]);
+  
+}
+
+void lcd_clear(void){
+  lcd_writecommand(0x01);
 }
