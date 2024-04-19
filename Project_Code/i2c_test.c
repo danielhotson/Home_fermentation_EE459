@@ -15,7 +15,7 @@ int main(void)
 {
 
 	DDRC = 0xFF; 	// Set all PORTC bits for Output
-	PORTC = 0x00;   // Set all PORTB bits to 0
+	PORTC = 0x00;   // Set all PORTC bits to 0
 	unsigned char hexV[8] = {0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80}; //hex values for single bit high
 
     i2c_init(BDIV);

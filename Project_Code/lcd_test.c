@@ -9,9 +9,9 @@ int main(void)
     lcd_init();
     _delay_ms(100);
 
-    lcd_stringout("abcdefghijklmnopqrstuvwxyz");
+    lcd_stringout("Hello");
     lcd_nextLine();
-    lcd_stringout("1234567890");
+    lcd_stringout("World");
 
     while (1) {
 		_delay_ms(100);

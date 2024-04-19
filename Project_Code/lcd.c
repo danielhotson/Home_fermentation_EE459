@@ -46,7 +46,7 @@ void lcd_init(void)
   lcd_stringout - Print the contents of the character string "str"
   at the current cursor position.
 */
-void lcd_stringout(unsigned char str[])
+void lcd_stringout(char str[])
 {
     int i = 0;
     if(mChar == 20){ //correctly increments to next line if over 20 
