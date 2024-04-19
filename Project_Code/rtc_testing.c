@@ -21,7 +21,7 @@ int main(void)
   lcd_stringout("RTC initialized...");
 
 
-  rtc_load(0,0,0); // set the seconds to 0, minutes to 0, and hours to 0
+  rtc_load(0,89,9); // set the seconds to 0, minutes to 0, and hours to 0
 
   char time_conv[10]; // this will be the converted int -> string for printing to lcd
 
@@ -49,7 +49,7 @@ int main(void)
     _delay_ms(1000);
     */
 
-    sprintf(time_conv, "%d", rtc_read_minutes());
+    sprintf(time_conv, "%d", rtc_read_hours());
     lcd_movetoline(1);
     lcd_stringout(time_conv);
     _delay_ms(15000);
