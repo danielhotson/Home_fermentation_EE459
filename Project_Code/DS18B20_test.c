@@ -1,59 +1,46 @@
-#include "avrc-ds18b20-onewire/pindef.h"
-#include "avrc-ds18b20-onewire/onewire.h"
-#include "avrc-ds18b20-onewire/ds18b20.h"
 #include <avr/io.h>
 #include <util/delay.h>
 #include <stdio.h>
 #include <string.h>
 #include "lcd.h"
-
-// ...
-
-// This is a hacked together interface to pass around a port/pin combination by reference
-// Everything in pindef.h compiles to quite inefficient asm currently.
-const gpin_t sensorPin = { &PORTC, &PINC, &DDRC, PC2 };
-
+#include "ds18b20.h"
+#define OUTBUFSIZE 20
 
 
 int main(void)
 {
     lcd_init();
+    ds_init();
+    DDRC |= (1 << PC0); //Set PC0 (led) for output
+    PORTC |= (1 << PC0); //turn on Port C
     _delay_ms(100);
-
     lcd_stringout("Temperature Sensor");
     lcd_nextLine();
-
-    
-
+    lcd_stringout("Test");
+    PORTC &= ~(1 << PC0); //turn off Port C
+    int c16, f10, old_temp;
+    int fint, ffrac;
+    unsigned char tdata[2];
+    char outbuf[OUTBUFSIZE];
+    ds_convert();   
     while (1) {
-        // Send a reset pulse. If we get a reply, read the sensor
-        if (onewire_reset(&sensorPin)) {
+        PORTC |= (1 << PC0); //turn on Port C
+       if(ds_temp(tdata)){
+            c16 = ((tdata[1] << 8) + tdata[0]); // Centigrade * 16
+            f10 = (c16 * 9) / 8 + 320;  // F * 10
+            fint = f10 / 10;
+            ffrac = f10 % 10;
+            if (ffrac < 0)
+            ffrac = -ffrac;
+            snprintf(outbuf, OUTBUFSIZE, "Temp:%3d.%1d", fint, ffrac);
+            lcd_movetoline(2);
+            lcd_stringout(outbuf);
+            ds_convert();
+       }
+        PORTC &= ~(1 << PC0); //turn off Port C
+        _delay_ms(100);
         
-            // Start a temperature reading (this includes skiprom)
-            ds18b20_convert(&sensorPin);
-            
-            // Wait for measurement to finish (750ms for 12-bit value)
-            _delay_ms(750);
-            
-            // Get the raw 2-byte temperature reading
-            int16_t reading = ds18b20_read_single(&sensorPin);
-            
-            if (reading != kDS18B20_CrcCheckFailed) {
-                // Convert to floating point (or keep as a Q12.4 fixed point value)
-                float temperature = ((float) reading) / 16;
-                char buffer[24];
-                sprintf(buffer, "    Temperature: %f c", temperature);
-                lcd_clear();
-                lcd_movetoline(0);
-                lcd_stringout(buffer);
-
-            } else {
-                // Handle bad temperature reading CRC 
-                // The datasheet suggests to just try reading again
-            }
-        }
         
-		_delay_ms(100);
     }
 
     return 0;   /* never reached */
