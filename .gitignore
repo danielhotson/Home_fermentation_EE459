@@ -2,3 +2,4 @@ Project_Code/main.elf
 .DS_Store
 Project_Code/main.hex
 *.o
+Project_Code/Makefile
