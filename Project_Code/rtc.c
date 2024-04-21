@@ -104,3 +104,11 @@ uint8_t rtc_read_days(void)
 
   return RDATA[0];
 }
+
+/*
+  Because the RTC sends register values coded in BCD (Binary Coded Decimal) we need to convert it to decimal for our purposes
+*/
+int bcd_to_decimal(unsigned char x)
+{
+  return x - 6 * (x >> 4);
+}

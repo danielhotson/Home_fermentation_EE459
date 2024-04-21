@@ -49,9 +49,9 @@ int main(void)
     _delay_ms(1000);
     */
 
-    sprintf(time_conv, "%d", rtc_read_hours());
+    sprintf(time_conv, "%d", bcd_to_decimal(rtc_read_hours())); // this should read the BCD value from RTC, convert to Decimal, then to string
     lcd_movetoline(1);
-    lcd_stringout(time_conv);
+    lcd_stringout(time_conv); // this should print that string out to the LCD
     _delay_ms(15000);
 
   }

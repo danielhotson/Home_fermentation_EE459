@@ -7,5 +7,6 @@ uint8_t rtc_read_seconds(void);
 uint8_t rtc_read_minutes(void);
 uint8_t rtc_read_hours(void);
 uint8_t rtc_read_days(void);
+int bcd_to_decimal(unsigned char x);
 
 #endif
