@@ -15,7 +15,7 @@
 #define BDIV (FOSC / 100000 - 16) / 2 + 1  // Puts I2C rate below 100kHz
 #define RTC_ADDRESS 0xD0 // 0b10100000
 
-unsigned char WDATA[4]; // initialize the write data (no more than size 4)
+unsigned char WDATA[5]; // initialize the write data (no more than size 4)
 uint8_t RDATA[2]; // initialize the read data (no more than size 2?)
 
 /*
@@ -26,13 +26,24 @@ void rtc_init(void)
   i2c_init(BDIV);
   _delay_ms(500);
   
+  return;
+}
+
+/*
+  Resets the time of the RTC to 00:00:00:00 (DD:HH:MM:SS)
+*/
+void start_timer(void)
+{
+  rtc_load(0x00, 0x00, 0x00, 0x00);
+
+  return;
 }
 
 
 /*
   rtc_load(seconds, minutes, hours) loads the given values to the RTC
 */
-void rtc_load(unsigned char sec, unsigned char min, unsigned char hr)
+void rtc_load(unsigned char seconds, unsigned char minutes, unsigned char hours, unsigned char days)
 {
 
   /*
@@ -40,24 +51,22 @@ void rtc_load(unsigned char sec, unsigned char min, unsigned char hr)
     indicating where we want to begin writing (should correspond to 'seconds' register)
   */
   WDATA[0] = 3;  // the first address that will be written to
-  WDATA[1] = sec;
-  WDATA[2] = min;
-  WDATA[3] = hr;
+  WDATA[1] = seconds;
+  WDATA[2] = minutes;
+  WDATA[3] = hours;
+  WDATA[4] = days;
 
   /*
-    write 3 elements from WDATA [1-3] to location RTC_ADDRESS,
+    write 4 elements from WDATA [1-4] to location RTC_ADDRESS,
     starting from element WDATA[0]
   */
-  i2c_io(RTC_ADDRESS, WDATA, 4, NULL, 0);
+  i2c_io(RTC_ADDRESS, WDATA, 5, NULL, 0);
 
   return;
 }
 
 /*
   Returns value in the "seconds" register (register 3)
-    Known Issue: skipping at the following values
-      9->16, 25->32, 41->48, 57->64, 73->80
-    But it does correctly reset after 1 minute
 */
 uint8_t rtc_read_seconds(void)
 {
@@ -66,7 +75,7 @@ uint8_t rtc_read_seconds(void)
   
   i2c_io(RTC_ADDRESS, WDATA, 1, RDATA, 1);
 
-  return RDATA[0]; // return the seconds value (not sure what index it should be)
+  return RDATA[0];
 }
 
 /*

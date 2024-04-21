@@ -18,10 +18,7 @@ int main(void)
   lcd_init();
   _delay_ms(100);
 
-  //lcd_stringout("RTC initialized...");
-
-  // may want to consider changing the values here to 0xXX format (unsigned chars)
-  rtc_load(0x30,0x59,0x00); // set the seconds to 0, minutes to 0, and hours to 0
+  rtc_load(0x00, 0x00, 0x00, 0x00); // load the rtc to 0 values
 
   char time_conv[10]; // this will be the converted int -> string for printing to lcd
 
@@ -32,22 +29,13 @@ int main(void)
   while(1)
   {
 
-    
-    //  This successfully prints stuff out
-    /*
-    sprintf(time_conv, "%02d", bcd_to_decimal(rtc_read_seconds())); // this should read the BCD value from RTC, convert to Decimal, then to string
-    lcd_movetoline(1);
-    lcd_stringout(time_conv); // this should print that string out to the LCD
-    _delay_ms(1000);
-    */
-
    /*
-    Let's see if we can format it as
+    Formatted as
     Time Elapsed:
-    HH:MM:SS
+    DD:HH:MM:SS
    */
 
-    sprintf(time_conv, "%02d:%02d:%02d", bcd_to_decimal(rtc_read_hours()), bcd_to_decimal(rtc_read_minutes()), bcd_to_decimal(rtc_read_seconds()));
+    sprintf(time_conv, "%02d:%02d:%02d:%02d", bcd_to_decimal(rtc_read_days()), bcd_to_decimal(rtc_read_hours()), bcd_to_decimal(rtc_read_minutes()), bcd_to_decimal(rtc_read_seconds()));
     lcd_movetoline(0);
     lcd_stringout("Time Elapsed:");
     lcd_movetoline(1);
