@@ -2,7 +2,7 @@
 #define RTC_H
 
 void rtc_init(void);
-void rtc_load(int sec, int min, int hr);
+void rtc_load(unsigned char sec, unsigned char min, unsigned char hr);
 uint8_t rtc_read_seconds(void);
 uint8_t rtc_read_minutes(void);
 uint8_t rtc_read_hours(void);

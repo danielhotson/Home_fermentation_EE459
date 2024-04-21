@@ -15,7 +15,7 @@
 #define BDIV (FOSC / 100000 - 16) / 2 + 1  // Puts I2C rate below 100kHz
 #define RTC_ADDRESS 0xD0 // 0b10100000
 
-uint8_t WDATA[4]; // initialize the write data (no more than size 4)
+unsigned char WDATA[4]; // initialize the write data (no more than size 4)
 uint8_t RDATA[2]; // initialize the read data (no more than size 2?)
 
 /*
@@ -32,7 +32,7 @@ void rtc_init(void)
 /*
   rtc_load(seconds, minutes, hours) loads the given values to the RTC
 */
-void rtc_load(int sec, int min, int hr)
+void rtc_load(unsigned char sec, unsigned char min, unsigned char hr)
 {
 
   /*

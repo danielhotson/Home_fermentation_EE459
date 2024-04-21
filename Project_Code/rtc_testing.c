@@ -18,42 +18,41 @@ int main(void)
   lcd_init();
   _delay_ms(100);
 
-  lcd_stringout("RTC initialized...");
+  //lcd_stringout("RTC initialized...");
 
-
-  rtc_load(0,89,9); // set the seconds to 0, minutes to 0, and hours to 0
+  // may want to consider changing the values here to 0xXX format (unsigned chars)
+  rtc_load(0x30,0x59,0x00); // set the seconds to 0, minutes to 0, and hours to 0
 
   char time_conv[10]; // this will be the converted int -> string for printing to lcd
 
 
   /*
-    This loop should continuously print out the seconds elapsed
+    Continuously prints out the elapsed time
   */
   while(1)
   {
-    /*
-      With the following block of code, the results skip at the following points (consistently)
-        9  -> 16
-        25 -> 32
-        41 -> 48
-        57 -> 64
-        73 -> 80
-        reset after 89
-      But it does accurately restart after 1 minute  
-    */
 
+    
+    //  This successfully prints stuff out
     /*
-    sprintf(time_conv, "%d",rtc_read_seconds()); // rtc_read_seconds should return a 0, and sprintf should convert it to a string
+    sprintf(time_conv, "%02d", bcd_to_decimal(rtc_read_seconds())); // this should read the BCD value from RTC, convert to Decimal, then to string
     lcd_movetoline(1);
-    lcd_stringout(time_conv);
+    lcd_stringout(time_conv); // this should print that string out to the LCD
     _delay_ms(1000);
     */
 
-    sprintf(time_conv, "%d", bcd_to_decimal(rtc_read_hours())); // this should read the BCD value from RTC, convert to Decimal, then to string
-    lcd_movetoline(1);
-    lcd_stringout(time_conv); // this should print that string out to the LCD
-    _delay_ms(15000);
+   /*
+    Let's see if we can format it as
+    Time Elapsed:
+    HH:MM:SS
+   */
 
+    sprintf(time_conv, "%02d:%02d:%02d", bcd_to_decimal(rtc_read_hours()), bcd_to_decimal(rtc_read_minutes()), bcd_to_decimal(rtc_read_seconds()));
+    lcd_movetoline(0);
+    lcd_stringout("Time Elapsed:");
+    lcd_movetoline(1);
+    lcd_stringout(time_conv);
+    _delay_ms(1000);
   }
 
   return 0; // Never Reached
