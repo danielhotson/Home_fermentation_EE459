@@ -17,6 +17,7 @@
 #include "i2c.h"
 #include "ds18b20.h"
 #include "relay.h"
+#include "rtc.h"
 #include "Booch_Bot.h"
 
 #define RELAY PD2
@@ -25,6 +26,7 @@
 #define ENCODER_1 PB1
 #define ENCODER_2 PB2
 #define OUTBUFSIZE 20
+#define RTC 0xD0
 
 char lastScreen[4][20];
 char nextScreen[4][20];
@@ -48,8 +50,12 @@ int main(void)
     return 0;   /* never reached */
 }
 
+/*
+	Initialize all of the components (LCD, RTC, Temperature Sensor)
+*/
 void Init(void){
 	lcd_init();
+	rtc_init();
 	ds_init();
 	ds_convert();
 	DDRD |= (1 << RELAY);
