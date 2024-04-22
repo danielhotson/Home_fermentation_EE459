@@ -1,6 +1,7 @@
 #include <avr/io.h>
 #include <util/delay.h>
 #include <stdint.h>
+#include "ethanol_sensor.h"
 
 uint16_t ethanol_read(uint8_t adcx);
 

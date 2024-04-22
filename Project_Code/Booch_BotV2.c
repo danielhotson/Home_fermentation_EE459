@@ -44,6 +44,8 @@ int upperTempBound = 0;
 int lowerTempBound = 0;
 int timeBound = 0;
 
+uint16_t ethanol_read(uint8_t adcx);
+
 
 int main(void)
 {
@@ -199,10 +201,19 @@ void Brewing(void)
         // regulate temperature
         
         // add a break function based on time (timer)
-        if (hours == timeBound){
+        if (minutes == timeBound){
             lcd_clear();
             lcd_movetoline(0);
             lcd_stringout("DONE");
+            lcd_nextLine();
+            int alcLevel = ethanol_read(PC2);
+            if(alcLevel == 0){
+                lcd_stringout("Alc may be present");
+                lcd_nextLine();
+                lcd_stringout("Drink with Caution");
+            }
+            lcd_nextLine();
+
             state = FINISHED_BREWING;
         }
     }
@@ -228,6 +239,11 @@ void Initialize(void)
     
     //Initialize Green LED
     DDRC |= (1 << DDC0);
+
+    DDRC &= ~(1<<PC1);
+    DDRC &= ~(1<<PC2);
+
+
 
     //End Initialization
     _delay_ms(500);
@@ -349,4 +365,15 @@ ISR(PCINT0_vect){
 	    changed = 1;
 	    old_state = new_state;
 	}
+}
+
+uint16_t ethanol_read(uint8_t adcx) {
+	ADMUX	&=	0xf0;
+	ADMUX	|=	adcx;
+
+	ADCSRA |= _BV(ADSC);
+
+	while ((ADCSRA & _BV(ADSC)));
+
+	return ADC;
 }
