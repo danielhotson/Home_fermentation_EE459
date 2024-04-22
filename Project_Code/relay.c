@@ -2,7 +2,7 @@
 #include <util/delay.h>
 #include "relay.h"
 /*
-
+ Allows power to flow through the Relay
 */
 void relay_on(int CTRL_PORT)
 {
@@ -14,6 +14,7 @@ void relay_on(int CTRL_PORT)
 }
 
 /*
+    Stops power from flowing through relay
 */
 void relay_off(int CTRL_PORT)
 {
