@@ -17,9 +17,6 @@ volatile int count;
 int main(void)
 {
 
-    //DDRB &= ~(1 << PB1); // sets PB1 for input
-    //DDRB &= ~(1 << PB2); // sets PB2 for input
-
     PORTB |= ((1 << PCINT2) | (1 << PCINT1)); // set pull-up resistor for PB1 and PB2
     PCICR |= (1 << PCINT0);
     PCMSK0 |= ((1 << PCINT2) | (1 << PCINT1)); // interrupts for PB1 and PB2?
@@ -77,6 +74,7 @@ int main(void)
             lcd_movetoline(1);
             sprintf(temp, "%03d", count);
             lcd_stringout(temp);
+            _delay_ms(10);
         }
     }
 
@@ -134,12 +132,12 @@ ISR(PCINT0_vect)
     {
         if (pin_b == 0)
         {
-            count--;
+            count++;
             new_state = 1;
         }
         else if (pin_a == 0)
         {
-            count++;
+            count--;
             new_state = 2;
         }
     }
