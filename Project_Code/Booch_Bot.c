@@ -63,11 +63,23 @@ void Init(void){
 
 void CheckInputs(void){
 	unsigned char tdata[2];
+
+	/*
+
+	*/
 	if(ds_temp(tdata)){
 		int c16 = ((tdata[1] << 8) + tdata[0]); // Centigrade * 16
 		temp = (c16 * 9) / 8 + 320;  // F * 10
 		ds_convert();
 	}
+
+	/*
+		add time polling
+	*/
+
+	/*
+		update the screen and outputs if time or temperature changes (every minute)
+	*/
 	if(temp != lastTemp){
 		UpdateScreen();
 		UpdateOutputs();
@@ -103,4 +115,26 @@ void UpdateOutputs(void){
 			relay_on(RELAY);
 		}
 	}
+}
+
+void ScreenDisplay(void){
+	char time_conv[10]; // this will be the converted int -> string for printing to lcd
+
+	sprintf(time_conv, "%02d:%02d:%02d:%02d",
+	 	bcd_to_decimal(rtc_read_days()),
+		bcd_to_decimal(rtc_read_hours()),
+		bcd_to_decimal(rtc_read_minutes()),
+		bcd_to_decimal(rtc_read_seconds()));
+	lcd_movetoline(0);
+	lcd_stringout("Time Elapsed:");
+	lcd_movetoline(1);
+	lcd_stringout(time_conv);
+
+	char temp_str[10];
+	sprintf(temp_str, "%03d", temp);
+	lcd_movetoline(2);
+	lcd_stringout("Temperature");
+	lcd_movetoline(3);
+	lcd_stringout(temp_str);
+
 }

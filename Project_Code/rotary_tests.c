@@ -122,7 +122,7 @@ ISR(PCINT0_vect)
         {
             new_state = 3;
         }
-        else if (pin_b == 3)
+        else if (pin_b == 0)
         {
             new_state = 0;
         }

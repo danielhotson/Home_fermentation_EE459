@@ -35,7 +35,11 @@ int main(void)
     DD:HH:MM:SS
    */
 
-    sprintf(time_conv, "%02d:%02d:%02d:%02d", bcd_to_decimal(rtc_read_days()), bcd_to_decimal(rtc_read_hours()), bcd_to_decimal(rtc_read_minutes()), bcd_to_decimal(rtc_read_seconds()));
+    sprintf(time_conv, "%02d:%02d:%02d:%02d",
+        bcd_to_decimal(rtc_read_days()),
+        bcd_to_decimal(rtc_read_hours()),
+        bcd_to_decimal(rtc_read_minutes()),
+        bcd_to_decimal(rtc_read_seconds()));
     lcd_movetoline(0);
     lcd_stringout("Time Elapsed:");
     lcd_movetoline(1);
