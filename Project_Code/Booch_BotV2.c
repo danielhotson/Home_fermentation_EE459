@@ -107,7 +107,7 @@ void Brewing(void)
     unsigned char tdata[2];
 
     int days, hours, minutes;
-    char converted_time[4]; // the array that the time will be converted into
+    char converted_time[20]; // the array that the time will be converted into
     lcd_clear();
     rtc_load(0x00, 0x00, 0x00, 0x00); // Reset the RTC
 
