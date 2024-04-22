@@ -37,6 +37,7 @@ int state; // state of the booch bot
 
 int current_seconds = 0, last_seconds = 0; 
 
+int temperature;
 
 
 int main(void)
@@ -103,20 +104,51 @@ void StartMenu(void)
 
 void Brewing(void)
 {
+    unsigned char tdata[2];
+
+    int days, hours, minutes;
     char converted_time[4]; // the array that the time will be converted into
     lcd_clear();
     rtc_load(0x00, 0x00, 0x00, 0x00); // Reset the RTC
-    
+
+    // This doesn't need to be repeatedly printed
+    lcd_movetoline(0);
+    lcd_stringout("Elapsed Time:");
+    //lcd_movetoline(2);
+    //lcd_stringout("Temperature: ");
+
     while (state == BREWING)
     {
-        current_seconds = bcd_to_decimal(rtc_read_seconds()); // sample the time so it only updates once a second
+        if(ds_temp(tdata)){
+		    int c16 = ((tdata[1] << 8) + tdata[0]); // Centigrade * 16
+		    temperature = (c16 * 9) / 8 + 320;  // F * 10
+		    ds_convert();
+	    }
 
-        if(current_seconds != last_seconds)
+        // this should probably all done simultaneously for consiseness + synchronization
+        current_seconds = bcd_to_decimal(rtc_read_seconds()); // sample the time so it only updates once a second
+        minutes = bcd_to_decimal(rtc_read_minutes());
+        hours = bcd_to_decimal(rtc_read_hours());
+        days = bcd_to_decimal(rtc_read_days());
+
+        // Format Temperature
+        char outbuf[OUTBUFSIZE];
+	    int fint = temperature / 10;
+	    int ffrac = temperature % 10;
+	    if (ffrac < 0)
+	    	ffrac = -ffrac;
+	    snprintf(outbuf, OUTBUFSIZE, "Temperature:%3d.%1d", fint, ffrac);
+
+        if(current_seconds != last_seconds) // update screen at most once a second
         {
-            // update screen at most once a second
-            sprintf(converted_time, "%02d", current_seconds);
-            lcd_movetoline(0);
+            sprintf(converted_time, "%02d:%02d:%02d:%02d", days, hours, minutes, current_seconds);
+            lcd_movetoline(1);
             lcd_stringout(converted_time);
+
+            //print temperature
+            lcd_movetoline(3);
+            lcd_stringout(outbuf);
+            
         }
         // display time/temperature updates
         // regulate temperature
