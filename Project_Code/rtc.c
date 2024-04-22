@@ -8,7 +8,6 @@
 #include <string.h> // used to output to lcd for debugging, could be removed
 #include "i2c.h"
 #include "rtc.h"
-#include "lcd.h" // used for debugging, could be removed
 
 #define FOSC 32768
 #define BAUD 9600
@@ -24,8 +23,7 @@ uint8_t RDATA[2]; // initialize the read data (no more than size 2?)
 void rtc_init(void)
 {
   i2c_init(BDIV);
-  _delay_ms(500);
-  
+  _delay_ms(100);
   return;
 }
 
@@ -66,7 +64,7 @@ void rtc_load(unsigned char seconds, unsigned char minutes, unsigned char hours,
 }
 
 /*
-  Returns value in the "seconds" register (register 3)
+  Returns value in the "seconds" register (register 3) in BCD format
 */
 uint8_t rtc_read_seconds(void)
 {
@@ -79,7 +77,7 @@ uint8_t rtc_read_seconds(void)
 }
 
 /*
-  Returns value in the "minutes" register (register 4)
+  Returns value in the "minutes" register (register 4) in BCD format
 */
 uint8_t rtc_read_minutes(void)
 {
@@ -91,7 +89,7 @@ uint8_t rtc_read_minutes(void)
 }
 
 /*
-  Returns value in the "hours" register (register 5)
+  Returns value in the "hours" register (register 5) in BCD format
 */
 uint8_t rtc_read_hours(void)
 {
@@ -103,7 +101,7 @@ uint8_t rtc_read_hours(void)
 }
 
 /*
-  Returns value in the "days" register (register 6)
+  Returns value in the "days" register (register 6) in BCD format
 */
 uint8_t rtc_read_days(void)
 {
