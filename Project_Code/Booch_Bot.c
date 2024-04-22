@@ -11,6 +11,7 @@
 
 #include <avr/io.h>
 #include <util/delay.h>
+#include <avr/interrupt.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include "lcd.h"
@@ -48,29 +49,32 @@ unsigned char pin;
 volatile unsigned char buttonPressed = 0;
 volatile unsigned char buttonChanged = 0;
 
+
 /*
 	Initialize all of the components (LCD, RTC, Temperature Sensor)
 */
 void Init(void){
-	rtc_init(); // RTC must be initialized before lcd, otherwise it stalls
-	lcd_init();
-	ds_init();
+	rtc_init();  // RTC must be initialized before lcd, otherwise it stalls
+	lcd_init();  // Initialize LCD
+	ds_init();	 // Initialze Temperature Sensor
 	ds_convert();
 
-	//Initialize Relay
-	DDRD |= (1 << RELAY);
+	
+	rtc_load(0x00, 0x00, 0x00, 0x00) // NOTE: Initializing the Registers to 00:00:00:00 for the RTC, can be changed as needed
+
+	DDRD |= (1 << RELAY); //Initialize Relay
 
 	// Initialize Button and Rotary Encoder
-	DDRB &= ~(1 << BUTTON);
-	PORTB |= ((1 << CHANNEL_A) | (1 << CHANNEL_B) | (1 << BUTTON)); // set pull-up resistor for rotary encoder and button
+	DDRB &= ~(1 << BUTTON);											 // Set BUTTON pin to input
+	PORTB |= ((1 << CHANNEL_A) | (1 << CHANNEL_B) | (1 << BUTTON));  // set pull-up resistor for rotary encoder and button
     PCICR |= (1 << BUTTON);
     PCMSK0 |= ((1 << CHANNEL_A) | (1 << CHANNEL_B) | (1 << BUTTON)); // interrupts for rotary encoder and button
-	sei(); // turn global interrupts on
+	sei();															 // turn global interrupts on
 
 	pin = PINB;
 
-	a = pin & (1<<PB1);
-	b = pin & (1<<PB2);
+	a = pin & (1 << CHANNEL_A);
+	b = pin & (1 << CHANNEL_B);
 
     if (!b && !a)
 	old_state = 0;
@@ -81,7 +85,7 @@ void Init(void){
     else
 	old_state = 3;
 
-    new_state = old_state;
+    //new_state = old_state; // I'm 85% sure this is unnecessary 
 }
 
 
@@ -89,7 +93,7 @@ int main(void)
 {
 	Init();
 
-	//infinite loop
+	// infinite loop
     while (1) {
 		CheckInputs();
 	}
@@ -97,24 +101,22 @@ int main(void)
     return 0;   /* never reached */
 }
 
+
+
 void CheckInputs(void){
 	unsigned char tdata[2];
 
-	/*
-		check temperature
-	*/
+	// check temperature
 	if(ds_temp(tdata)){
 		int c16 = ((tdata[1] << 8) + tdata[0]); // Centigrade * 16
 		temp = (c16 * 9) / 8 + 320;  // F * 10
 		ds_convert();
 	}
 
-	/*
-		get time
-	*/
+	// get time
 	sec = bcd_to_decimal(rtc_read_seconds());
 
-	//Update screen (once a seccond)
+	// Update screen (once a second)
 	if(sec != lastSec ){ 
 		day = bcd_to_decimal(rtc_read_days());
 		hrs = bcd_to_decimal(rtc_read_hours());
@@ -129,7 +131,7 @@ void UpdateScreen(void){
 	lcd_clear();
 	lcd_movetoline(0);
 
-	//Format Temperature
+	// Format Temperature
 	char outbuf[OUTBUFSIZE];
 	int fint = temp / 10;
 	int ffrac = temp % 10;
@@ -138,13 +140,13 @@ void UpdateScreen(void){
 	snprintf(outbuf, OUTBUFSIZE, "Temp:%3d.%1d", fint, ffrac);
 	lcd_stringout(outbuf);
 
-	//Warn User if heating element is on
+	// Warn User if heating element is on
 	if(isHeating){
 		lcd_nextLine();
 		lcd_stringout("HEATING");
 	}
 
-	//Print Elapsed Time
+	// Print Elapsed Time
 	char time_conv[10]; 
 	sprintf(time_conv, "%02d:%02d:%02d:%02d", day, hrs, min, sec);
 	lcd_nextLine();
@@ -170,8 +172,8 @@ void UpdateOutputs(void){
 
 ISR(PCINT1_vect){
 	pin = PINC;
-	a = pin & (1<<PC1);
-	b = pin & (1<<PC5);
+	a = pin & (1<<CHANNEL_A);
+	b = pin & (1<<CHANNEL_B);
 
 	/*
 		Button press of Rotary Encoder
