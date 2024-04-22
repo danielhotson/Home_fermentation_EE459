@@ -22,9 +22,9 @@
 
 #define RELAY PD2
 #define LED PC0
-#define ENCODER_SWITCH PB0
-#define ENCODER_1 PB1
-#define ENCODER_2 PB2
+#define BUTTON PCINT0	  // Button of Rotary Encoder
+#define CHANNEL_B PCINT1  // Channel B of Rotary Encoder
+#define CHANNEL_A PCINT2  // Channel A of Rotary Encoder
 #define OUTBUFSIZE 20
 #define RTC 0xD0
 
@@ -44,20 +44,28 @@ int count = 0;		// Count to display
 unsigned char a, b;
 unsigned char pin;
 
+// variables for Rotary Encoder Button
+volatile unsigned char buttonPressed = 0;
+volatile unsigned char buttonChanged = 0;
+
 /*
 	Initialize all of the components (LCD, RTC, Temperature Sensor)
 */
 void Init(void){
-	rtc_init(); // RTC must be initialized first, otherwise it stalls
+	rtc_init(); // RTC must be initialized before lcd, otherwise it stalls
 	lcd_init();
 	ds_init();
 	ds_convert();
+
+	//Initialize Relay
 	DDRD |= (1 << RELAY);
 
-	PORTB |= ((1 << PB1) | (1 << PB2)); // set pull-up resistor for PB1 and PB2
-    PCICR |= (1 << PCINT0);
-    PCMSK0 |= ((1 << PCINT2) | (1 << PCINT1)); // interrupts for PB1 and PB2
-    sei(); // turn global interrupts on
+	// Initialize Button and Rotary Encoder
+	DDRB &= ~(1 << BUTTON);
+	PORTB |= ((1 << CHANNEL_A) | (1 << CHANNEL_B) | (1 << BUTTON)); // set pull-up resistor for rotary encoder and button
+    PCICR |= (1 << BUTTON);
+    PCMSK0 |= ((1 << CHANNEL_A) | (1 << CHANNEL_B) | (1 << BUTTON)); // interrupts for rotary encoder and button
+	sei(); // turn global interrupts on
 
 	pin = PINB;
 
@@ -164,6 +172,27 @@ ISR(PCINT1_vect){
 	pin = PINC;
 	a = pin & (1<<PC1);
 	b = pin & (1<<PC5);
+
+	/*
+		Button press of Rotary Encoder
+	*/
+	if (PINB & (1 << BUTTON))
+    {
+        if (buttonPressed == 0)
+        {
+            buttonPressed = 1;
+        }
+        
+    }
+    else
+    {
+        if (buttonPressed == 1)
+        {
+            buttonPressed = 0;
+            buttonChanged = 1;
+        }
+        
+    }
 
 	// For each state, examine the two input bits to see if state
 	// has changed, and if so set "new_state" to the new state,
