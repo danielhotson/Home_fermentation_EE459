@@ -170,8 +170,8 @@ void UpdateOutputs(void){
 	}
 }
 
-ISR(PCINT1_vect){
-	pin = PINC;
+ISR(PCINT0_vect){
+	pin = PINB;
 	a = pin & (1<<CHANNEL_A);
 	b = pin & (1<<CHANNEL_B);
 
