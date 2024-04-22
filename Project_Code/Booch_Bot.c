@@ -29,6 +29,11 @@
 #define OUTBUFSIZE 20
 #define RTC 0xD0
 
+#define START_MENU_TEMP 0
+#define START_MENU_TIME 1
+#define BREWING 2
+#define FINISHED_BREWING 3
+
 int temp = 0; //in degf times 10
 int day;
 int hrs;
@@ -38,6 +43,7 @@ int lastSec;
 int lowerThreshold = 75;
 int upperThreshold = 80;
 int isHeating = 0;
+int state = 0;
 
 unsigned char new_state, old_state;
 volatile unsigned char changed = 0;  // Flag for state change
@@ -60,7 +66,7 @@ void Init(void){
 	ds_convert();
 
 	
-	rtc_load(0x00, 0x00, 0x00, 0x00) // NOTE: Initializing the Registers to 00:00:00:00 for the RTC, can be changed as needed
+	rtc_load(0, 0, 0, 0); // NOTE: Initializing the Registers to 00:00:00:00 for the RTC, can be changed as needed
 
 	DDRD |= (1 << RELAY); //Initialize Relay
 
@@ -95,6 +101,18 @@ int main(void)
 
 	// infinite loop
     while (1) {
+		if(state = START_MENU_TEMP){
+
+		}
+		else if(state = START_MENU_TIME){
+			
+		}
+		else if(state=BREWING){
+
+		}
+		else if(state = FINISHED_BREWING){
+			
+		}
 		CheckInputs();
 	}
 
@@ -247,8 +265,8 @@ ISR(PCINT1_vect){
 	}
 	// If state changed, update the value of old_state,
 	// and set a flag that the state has changed.
-	if (new_state != old_state) {
+	if (old_state = 3) {
 	    changed = 1;
-	    old_state = new_state;
 	}
+	old_state = new_state;
 }
