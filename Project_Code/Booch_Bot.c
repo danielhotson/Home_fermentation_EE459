@@ -28,14 +28,53 @@
 #define OUTBUFSIZE 20
 #define RTC 0xD0
 
-char lastScreen[4][20];
-char nextScreen[4][20];
 int temp = 0; //in degf times 10
-int lastTemp = 0;
+int day;
+int hrs;
+int min;
+int sec;
+int lastSec;
 int lowerThreshold = 75;
 int upperThreshold = 80;
 int isHeating = 0;
 
+unsigned char new_state, old_state;
+volatile unsigned char changed = 0;  // Flag for state change
+int count = 0;		// Count to display
+unsigned char a, b;
+unsigned char pin;
+
+/*
+	Initialize all of the components (LCD, RTC, Temperature Sensor)
+*/
+void Init(void){
+	lcd_init();
+	rtc_init();
+	ds_init();
+	ds_convert();
+	DDRD |= (1 << RELAY);
+
+	PORTB |= ((1 << PB1) | (1 << PB2)); // set pull-up resistor for PB1 and PB2
+    PCICR |= (1 << PCINT0);
+    PCMSK0 |= ((1 << PCINT2) | (1 << PCINT1)); // interrupts for PB1 and PB2
+    sei(); // turn global interrupts on
+
+	pin = PINB;
+
+	a = pin & (1<<PB1);
+	b = pin & (1<<PB2);
+
+    if (!b && !a)
+	old_state = 0;
+    else if (!b && a)
+	old_state = 1;
+    else if (b && !a)
+	old_state = 2;
+    else
+	old_state = 3;
+
+    new_state = old_state;
+}
 
 
 int main(void)
@@ -50,22 +89,11 @@ int main(void)
     return 0;   /* never reached */
 }
 
-/*
-	Initialize all of the components (LCD, RTC, Temperature Sensor)
-*/
-void Init(void){
-	lcd_init();
-	rtc_init();
-	ds_init();
-	ds_convert();
-	DDRD |= (1 << RELAY);
-}
-
 void CheckInputs(void){
 	unsigned char tdata[2];
 
 	/*
-
+		check temperature
 	*/
 	if(ds_temp(tdata)){
 		int c16 = ((tdata[1] << 8) + tdata[0]); // Centigrade * 16
@@ -74,32 +102,47 @@ void CheckInputs(void){
 	}
 
 	/*
-		add time polling
+		get time
 	*/
+	sec = bcd_to_decimal(rtc_read_seconds());
 
-	/*
-		update the screen and outputs if time or temperature changes (every minute)
-	*/
-	if(temp != lastTemp){
+	//Update screen (once a seccond)
+	if(sec != lastSec ){ 
+		day = bcd_to_decimal(rtc_read_days());
+		hrs = bcd_to_decimal(rtc_read_hours());
+		min = bcd_to_decimal(rtc_read_minutes());
+		lastSec = sec;
 		UpdateScreen();
 		UpdateOutputs();
 	}
-	lastTemp = temp;
 }
+
 void UpdateScreen(void){
 	lcd_clear();
-	lcd_movetoline(1);
+	lcd_movetoline(0);
+
+	//Format Temperature
 	char outbuf[OUTBUFSIZE];
 	int fint = temp / 10;
 	int ffrac = temp % 10;
 	if (ffrac < 0)
-	ffrac = -ffrac;
-	snprintf(outbuf, OUTBUFSIZE, "    Temp:%3d.%1d", fint, ffrac);
+		ffrac = -ffrac;
+	snprintf(outbuf, OUTBUFSIZE, "Temp:%3d.%1d", fint, ffrac);
 	lcd_stringout(outbuf);
+
+	//Warn User if heating element is on
 	if(isHeating){
 		lcd_nextLine();
 		lcd_stringout("HEATING");
 	}
+
+	//Print Elapsed Time
+	char time_conv[10]; 
+	sprintf(time_conv, "%02d:%02d:%02d:%02d", day, hrs, min, sec);
+	lcd_nextLine();
+	lcd_stringout("Time Elapsed:");
+	lcd_nextLine();
+	lcd_stringout(time_conv);
 }
 
 void UpdateOutputs(void){
@@ -117,24 +160,64 @@ void UpdateOutputs(void){
 	}
 }
 
-void ScreenDisplay(void){
-	char time_conv[10]; // this will be the converted int -> string for printing to lcd
+ISR(PCINT1_vect){
+	pin = PINC;
+	a = pin & (1<<PC1);
+	b = pin & (1<<PC5);
 
-	sprintf(time_conv, "%02d:%02d:%02d:%02d",
-	 	bcd_to_decimal(rtc_read_days()),
-		bcd_to_decimal(rtc_read_hours()),
-		bcd_to_decimal(rtc_read_minutes()),
-		bcd_to_decimal(rtc_read_seconds()));
-	lcd_movetoline(0);
-	lcd_stringout("Time Elapsed:");
-	lcd_movetoline(1);
-	lcd_stringout(time_conv);
+	// For each state, examine the two input bits to see if state
+	// has changed, and if so set "new_state" to the new state,
+	// and adjust the count value.
+	if (old_state == 0) {
 
-	char temp_str[10];
-	sprintf(temp_str, "%03d", temp);
-	lcd_movetoline(2);
-	lcd_stringout("Temperature");
-	lcd_movetoline(3);
-	lcd_stringout(temp_str);
+	    // Handle A and B inputs for state 0
+		if (a){
+			new_state = 1;
+		}
+		else if (b){
+			new_state = 2;
+		}
 
+	}
+	else if (old_state == 1) {
+
+	    // Handle A and B inputs for state 1
+		if (b){
+			new_state = 3;
+		}
+		else if (!a){
+			new_state = 0;
+		}
+
+	}
+	else if (old_state == 2) {
+
+	    // Handle A and B inputs for state 2
+		if (!b){
+			new_state = 0;
+		}
+		else if (a){
+			new_state = 3;
+		}
+
+	}
+	else {   // old_state = 3
+
+	    // Handle A and B inputs for state 3
+		if (!a){
+			new_state = 2;
+			count++;
+		}
+		else if (!b){
+			new_state = 1;
+			count--;
+		}
+
+	}
+	// If state changed, update the value of old_state,
+	// and set a flag that the state has changed.
+	if (new_state != old_state) {
+	    changed = 1;
+	    old_state = new_state;
+	}
 }
