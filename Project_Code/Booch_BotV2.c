@@ -39,6 +39,9 @@ int state; // state of the booch bot
 int current_seconds = 0, last_seconds = 0; 
 
 int temperature;
+int upperTempBound = 0;
+int lowerTempBound = 0;
+int timeBound = 0;
 
 
 int main(void)
@@ -76,24 +79,38 @@ void StartMenu(void)
 
 
     lcd_movetoline(0);
-    lcd_stringout("Start Menu...");
+    lcd_stringout("Enter Ferment Time hrs");
+
     while (state == START_MENU)
     {
         if (buttonChanged) // checks for button press
         {
             lcd_movetoline(0);
             lcd_stringout("-");
-            state = BREWING;
+            if(timeBound == 0 && count != 0){
+                timeBound = count;
+                lcd_clear();
+                lcd_stringout("Enter lower Temp f");
+            }
+            else if(lowerTempBound == 0 && count != 0){
+                lowerTempBound = count;
+                count = 0;
+                lcd_clear();
+                lcd_stringout("Enter upper Temp f");
+            }
+            else if(upperTempBound == 0 && count != 0){
+                upperTempBound = count;
+                lcd_clear();
+                count = 0;
+                lcd_stringout("Entering Brewing state");
+                state = BREWING;
+            }
         }
         else if (changed) // checks for rotation
         {
             lcd_movetoline(1);
             sprintf(temp, "%03d", count);
             lcd_stringout(temp);
-
-            /*
-                Add Code Here
-            */
             changed = 0;
         }
         
