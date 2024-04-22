@@ -35,6 +35,7 @@ volatile unsigned char changed = 0, buttonPressed = 0, buttonChanged = 0; // var
 volatile int count = 0; // variable for rotary encoder value
 
 int state; // state of the booch bot
+int isHeating = 0; //is relay on
 
 int current_seconds = 0, last_seconds = 0; 
 
@@ -77,34 +78,39 @@ void StartMenu(void)
 {
     char temp[5]; // temporary value DEBUGGING
 
-
     lcd_movetoline(0);
-    lcd_stringout("Enter Ferment Time hrs");
+    lcd_stringout("Ferment Time hrs: ");
 
     while (state == START_MENU)
     {
         if (buttonChanged) // checks for button press
         {
-            lcd_movetoline(0);
-            lcd_stringout("-");
             if(timeBound == 0 && count != 0){
                 timeBound = count;
-                lcd_clear();
-                lcd_stringout("Enter lower Temp f");
-            }
-            else if(lowerTempBound == 0 && count != 0){
-                lowerTempBound = count;
                 count = 0;
                 lcd_clear();
-                lcd_stringout("Enter upper Temp f");
+                lcd_stringout("Lower Temp f:");
+                _delay_ms(100);
+            }
+            else if(lowerTempBound == 0 && count != 0){
+                lowerTempBound = count*10;
+                count = 0;
+                lcd_clear();
+                lcd_stringout("Upper Temp f:");
+                _delay_ms(100);
             }
             else if(upperTempBound == 0 && count != 0){
-                upperTempBound = count;
+                upperTempBound = count*10;
+                if(upperTempBound < lowerTempBound){
+                    upperTempBound = lowerTempBound + 1;
+                }
                 lcd_clear();
                 count = 0;
                 lcd_stringout("Entering Brewing state");
+                _delay_ms(1000);
                 state = BREWING;
             }
+            buttonChanged = 0;
         }
         else if (changed) // checks for rotation
         {
@@ -128,8 +134,6 @@ void Brewing(void)
     rtc_load(0x00, 0x00, 0x00, 0x00); // Reset the RTC
 
     // This doesn't need to be repeatedly printed
-    lcd_movetoline(0);
-    lcd_stringout("Elapsed Time:");
     //lcd_movetoline(2);
     //lcd_stringout("Temperature: ");
 
@@ -157,20 +161,45 @@ void Brewing(void)
 
         if(current_seconds != last_seconds) // update screen at most once a second
         {
+            lcd_clear();
+            lcd_movetoline(0);
+            lcd_stringout("Elapsed Time:");
             sprintf(converted_time, "%02d:%02d:%02d:%02d", days, hours, minutes, current_seconds);
             lcd_movetoline(1);
             lcd_stringout(converted_time);
 
+            last_seconds = current_seconds;
+
             //print temperature
-            lcd_movetoline(3);
+            lcd_movetoline(2);
             lcd_stringout(outbuf);
+
+            //check relay
+            if (isHeating == 1){
+                if(temperature > upperTempBound){
+                    relay_off(RELAY);
+                    isHeating = 0;
+		    }
+            }
+            else{
+                if(temperature < lowerTempBound){
+                    isHeating = 1;
+                    relay_on(RELAY);
+                }
+            }
+
+            // Warn User if heating element is on
+            if(isHeating){
+                lcd_nextLine();
+                lcd_stringout("HEATING");
+            }
             
         }
         // display time/temperature updates
         // regulate temperature
         
         // add a break function based on time (timer)
-        if (current_seconds == 30){
+        if (hours == timeBound){
             lcd_clear();
             lcd_movetoline(0);
             lcd_stringout("DONE");
