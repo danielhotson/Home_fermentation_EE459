@@ -15,6 +15,7 @@
 #include "rtc.h"
 #include "Booch_BotV2.h"
 
+#define GREEN_LED PC0
 #define RELAY PD2
 #define LED PC0
 #define BUTTON PCINT0	  // Button of Rotary Encoder
@@ -59,7 +60,10 @@ int main(void)
         }
         else // state == FINISHED_BREWING
         {
-            _delay_ms(100);
+            PORTC |= 1 << GREEN_LED;
+            _delay_ms(500);
+            PORTC &= ~(1 <<GREEN_LED);
+            _delay_ms(500);
         }
     }
 
@@ -75,13 +79,13 @@ void StartMenu(void)
     lcd_stringout("Start Menu...");
     while (state == START_MENU)
     {
-        if (buttonChanged)
+        if (buttonChanged) // checks for button press
         {
             lcd_movetoline(0);
             lcd_stringout("-");
             state = BREWING;
         }
-        else if (changed)
+        else if (changed) // checks for rotation
         {
             lcd_movetoline(1);
             sprintf(temp, "%03d", count);
@@ -90,14 +94,9 @@ void StartMenu(void)
             /*
                 Add Code Here
             */
-
             changed = 0;
         }
         
-        //else
-        //{
-            //lcd_stringout("-");
-        //}
     }
     return;
 }
@@ -180,6 +179,9 @@ void Initialize(void)
     ds_convert();
     relay_init(); // Initialize the Relay
     rotary_encoder_init(); // Initialize Rotary Encoder
+    
+    //Initialize Green LED
+    DDRC |= (1 << DDC0);
 
     //End Initialization
     _delay_ms(500);
