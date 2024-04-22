@@ -112,5 +112,13 @@ void lcd_nextLine(void){
 }
 
 void lcd_clear(void){
-  lcd_writecommand(0x01);
+  //lcd_writecommand(0x01); // this was the old way of doing it
+  
+  lcd_movetoline(0);
+  int i;
+  for (i = 0; i < 80; i++)
+  {
+    lcd_stringout(" ");
+  }
+  
 }
