@@ -69,7 +69,7 @@ int main(void)
                 /*
                     Add Code Here
                 */
-               
+
                 changed = 0;
             }
             if (buttonChanged)
@@ -98,8 +98,8 @@ int main(void)
 ISR(PCINT0_vect)
 {
     snap = PINB;
-    pin_b = (snap & (1 << PCINT1)); // take bit 1
-    pin_a = (snap & (1 << PCINT2)); // take bit 2
+    pin_b = (snap & (1 << CHANNEL_B)); // take bit 1
+    pin_a = (snap & (1 << CHANNEL_A)); // take bit 2
 
     if (PINB & (1 << BUTTON))
     {
