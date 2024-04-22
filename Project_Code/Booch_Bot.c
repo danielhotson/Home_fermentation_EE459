@@ -48,8 +48,8 @@ unsigned char pin;
 	Initialize all of the components (LCD, RTC, Temperature Sensor)
 */
 void Init(void){
+	rtc_init(); // RTC must be initialized first, otherwise it stalls
 	lcd_init();
-	rtc_init();
 	ds_init();
 	ds_convert();
 	DDRD |= (1 << RELAY);
