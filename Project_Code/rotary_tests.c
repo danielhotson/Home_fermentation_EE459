@@ -49,7 +49,7 @@ int main(void)
         old_state = 3;
     }
 
-    new_state = old_state;
+    //new_state = old_state;
 
     count = 0;
 
@@ -62,21 +62,28 @@ int main(void)
         {
             if (changed)
             {
-                //lcd_movetoline(1);
+                //lcd_movetoline(0);
                 //sprintf(temp, "%03d", count);
                 //lcd_stringout(temp);
 
                 /*
                     Add Code Here
                 */
+               
                 changed = 0;
             }
             if (buttonChanged)
             {
+                //lcd_movetoline(1);
+                //lcd_stringout("Pressed");
+                //_delay_ms(50);
+                //lcd_movetoline(1);
+                //lcd_stringout("          ");
+
                 /*
                     Add Code here
                 */
-                _delay_ms(50);
+                
                 buttonChanged = 0;
             }
 
@@ -90,8 +97,6 @@ int main(void)
 
 ISR(PCINT0_vect)
 {
-    
-
     snap = PINB;
     pin_b = (snap & (1 << PCINT1)); // take bit 1
     pin_a = (snap & (1 << PCINT2)); // take bit 2
@@ -102,10 +107,16 @@ ISR(PCINT0_vect)
         {
             buttonPressed = 1;
         }
-        else{
+        
+    }
+    else
+    {
+        if (buttonPressed == 1)
+        {
             buttonPressed = 0;
             buttonChanged = 1;
         }
+        
     }
 
     if (old_state == 0)
