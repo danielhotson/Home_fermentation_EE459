@@ -206,8 +206,7 @@ void Brewing(void)
             lcd_movetoline(0);
             lcd_stringout("DONE");
             lcd_nextLine();
-            int alcLevel = ethanol_read(PC2);
-            if(alcLevel == 0){
+            if(!(PINC & (1 << PC1))){
                 lcd_stringout("Alc may be present");
                 lcd_nextLine();
                 lcd_stringout("Drink with Caution");
