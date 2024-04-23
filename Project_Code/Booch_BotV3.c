@@ -15,7 +15,7 @@
 #include "ds18b20.h"
 #include "relay.h"
 #include "rtc.h"
-#include "Booch_BotV2.h"
+#include "Booch_BotV3.h"
 
 #define GREEN_LED PC0
 #define RELAY PD2
@@ -25,6 +25,16 @@
 #define CHANNEL_A PCINT2  // Channel A of Rotary Encoder
 #define OUTBUFSIZE 20
 #define RTC 0xD0
+
+// addresses in EEPROM for following values
+#define EEPROM_STATE_ADDR 200
+#define EEPROM_DAYS_ADDR 250
+#define EEPROM_HOURS_ADDR 300
+#define EEPROM_MINS_ADDR 350
+#define EEPROM_SECONDS_ADDR 400
+#define EEPROM_UPBOUND_ADDR 450
+#define EEPROM_LOBOUND_ADDR 500
+#define EEPROM_TIMEBOUND_ADDR 550
 
 #define INITIALIZING 0
 #define START_MENU 1
@@ -275,6 +285,9 @@ void Initialize(void)
         upperTempBound = eeprom_read_word((void *) 450); 
         lowerTempBound = eeprom_read_word((void *) 500); 
         timeBound = eeprom_read_word((void *) 550);
+
+        // these new values need to be converted into BCD format, and the rtc_load expects an unsigned char
+        rtc_load(decimal_to_bcd(sec), decimal_to_bcd(min), decimal_to_bcd(hrs), decimal_to_bcd(days));
     }
     else {
         eeprom_update_word((void *) 200, START_MENU);
@@ -294,6 +307,8 @@ void Initialize(void)
         upperTempBound = eeprom_read_word((void *) 450); 
         lowerTempBound = eeprom_read_word((void *) 500); 
         timeBound = eeprom_read_word((void *) 550);
+
+        rtc_load(0x00,0x00,0x00,0x00); // reset the RTC's internal registers
     }
     
 
@@ -337,6 +352,15 @@ void relay_init(void)
 {
     DDRD |= (1 << RELAY);
 }
+
+unsigned char decimal_to_bcd(short decimal)
+{
+    short converted = (decimal/10*16) + (dec%10);
+    unsigned char temp[10];
+    sprintf(temp, "%d", converted);
+
+    return temp;
+}   
 
 ISR(PCINT0_vect){
 	pin = PINB;
