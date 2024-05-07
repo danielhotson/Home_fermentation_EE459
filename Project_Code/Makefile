@@ -1,7 +1,7 @@
 DEVICE     = atmega328p
 CLOCK      = 7372890
 PROGRAMMER = -c usbtiny -P usb
-OBJECTS    = Booch_BotV2.o lcd.o i2c.o rtc.o relay.o ds18b20.o
+OBJECTS    = Booch_BotV3.o lcd.o i2c.o rtc.o relay.o ds18b20.o
 FUSES      = -U hfuse:w:0xd9:m -U lfuse:w:0xe0:m
 
 # Fuse Low Byte = 0xe0   Fuse High Byte = 0xd9   Fuse Extended Byte = 0xff
