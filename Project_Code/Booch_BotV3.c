@@ -18,7 +18,6 @@
 
 #define GREEN_LED PC0
 #define RELAY PD2
-#define LED PC0
 #define BUTTON PCINT0    // Button of Rotary Encoder
 #define CHANNEL_B PCINT1 // Channel B of Rotary Encoder
 #define CHANNEL_A PCINT2 // Channel A of Rotary Encoder
@@ -35,22 +34,25 @@
 #define BREWING 2
 #define FINISHED_BREWING 3
 
-unsigned char new_state, old_state, pin, a, b; // variables for Rotary Encoder
-
-volatile unsigned char changed = 0, buttonPressed = 0,
-                       buttonChanged = 0; // variables for Rotary Encoder Button
-volatile int count = 0;                   // variable for rotary encoder value
-volatile short state = START_MENU;        // state of the booch bot
-int isHeating = 0;                        // is relay on
+int isHeating = 0; // is relay on
 int last_seconds = 0;
 int temperature;
+short days;
+short hrs;
+short min;
+short sec;
+
+// Variables accessed in ISR
+volatile unsigned char new_state, old_state, pin, a,
+    b; // variables for Rotary Encoder
+volatile unsigned char changed = 0, buttonPressed = 0,
+                       buttonChanged = 0; // variables for Button
+volatile int count = 0;                   // Rotary encoder value
+// EEPROM variables
+volatile short state = START_MENU; // state of the booch bot
 volatile short upperTempBound = 0;
 volatile short lowerTempBound = 0;
 volatile short timeBound = 0;
-volatile short days;
-volatile short hrs;
-volatile short min;
-volatile short sec;
 
 int main(void) {
   // Initialize everything
